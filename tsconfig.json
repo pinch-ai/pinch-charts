@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ES6", // Specify ECMAScript target version
+		"module": "ESNext", // CommonJS or ESNext for React imports
+		"jsx": "react-jsx", // JSX settings for React
+		"moduleResolution": "node", // Required for resolving node modules
+		"esModuleInterop": true, // Interoperability for commonjs and es6 modules
+		"skipLibCheck": true, // Skip type checking for node modules
+		"strict": true // Enable strict type checking
+	},
+	"include": ["src/**/*"], // Adjust based on your folder structure
+	"exclude": ["node_modules"]
+}
