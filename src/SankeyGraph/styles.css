@@ -4,8 +4,26 @@
 	font-weight: 500;
 	line-height: 19.24px;
 	letter-spacing: -0.01em;
-	text-align: center;
 	color: #2A2D3C;
+}
+
+.opacity80 {
+	opacity: 0.8;
+}
+
+.sankey-node-tooltip-with-delta {
+	font-family: Inter;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 19.24px;
+	letter-spacing: -0.01em;
+	color: #2A2D3C;
+	text-align: center;
+}
+
+.delta {
+	color: #2763EC;
+	font-weight: 600;
 }
 
 .sankey-node-title {
@@ -15,4 +33,15 @@
 	line-height: 15.73px;
 	text-align: right;
 
+}
+
+.tooltip {
+	transition: opacity 0.3s ease;
+	visibility: hidden;
+	opacity: 0;
+}
+
+.tooltip.visible {
+	visibility: visible;
+	opacity: 1;
 }
