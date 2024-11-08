@@ -223,7 +223,7 @@ const SankeyChart = ({ data, width = 800, heightMultiplier = 120 }) => {
 			ref={svgRef}
 			style={{
 				overflow: "visible",
-				margin: "50px 50px 50px 80px",
+				margin: "50px 50px 150px 80px",
 			}}
 		/>
 	);
