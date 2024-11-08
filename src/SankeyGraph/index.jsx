@@ -44,12 +44,11 @@ function wrapTextWithTooltip(
 		tspan.text(line.join(" "));
 		if (tspan.node().getComputedTextLength() > maxWidth) {
 			line.pop();
-			tspan.text(line.join(" "));
-			line = [words[i]];
 			lineNumber++;
+			tspan.text(`${line.join(" ")}${lineNumber >= maxLines ? "..." : ""}`);
+			line = [words[i]];
 
 			if (lineNumber >= maxLines) {
-				tspan.text(line.join(" ") + "…");
 				isTruncated = true;
 				break;
 			}
@@ -63,7 +62,6 @@ function wrapTextWithTooltip(
 	}
 
 	if (isTruncated) {
-		console.log(isTruncated, ">>>>>isTruncated");
 		const tooltip = svg
 			.append("foreignObject")
 			.attr("class", "tooltip")
