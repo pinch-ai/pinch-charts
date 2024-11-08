@@ -16,38 +16,6 @@ function sankeyLinkHorizontal() {
 	return linkHorizontal().source(horizontalSource).target(horizontalTarget);
 }
 
-function wrapText(textElement, textContent, maxWidth, nodeHeight) {
-	const words = textContent.split(/\s+/).reverse();
-	let word;
-	let line = [];
-	let lineNumber = 0;
-	const lineHeight = 1.1;
-	const y = textElement.attr("y");
-	const dy = parseFloat(textElement.attr("dy"));
-	let tspan = textElement
-		.text(null)
-		.append("tspan")
-		.attr("x", textElement.attr("x"))
-		.attr("y", y)
-		.attr("dy", dy + "em");
-
-	while ((word = words.pop())) {
-		line.push(word);
-		tspan.text(line.join(" "));
-		if (tspan.node().getComputedTextLength() > maxWidth) {
-			line.pop();
-			tspan.text(line.join(" "));
-			line = [word];
-			tspan = textElement
-				.append("tspan")
-				.attr("x", textElement.attr("x"))
-				.attr("y", y)
-				.attr("dy", ++lineNumber * lineHeight + dy + "em")
-				.text(word);
-		}
-	}
-}
-
 function wrapTextWithTooltip(
 	textElement,
 	textContent,
@@ -58,10 +26,10 @@ function wrapTextWithTooltip(
 	const words = textContent.split(/\s+/);
 	let line = [];
 	let lineNumber = 0;
-	const lineHeight = 1.1; // em units for line height
+	const lineHeight = 1.1;
 	const y = textElement.attr("y");
 	const dy = parseFloat(textElement.attr("dy"));
-	const maxLines = Math.floor(nodeHeight / (lineHeight * 16)) - 1; // Fit one line less than nodeHeight
+	const maxLines = Math.floor(nodeHeight / (lineHeight * 16)) - 1;
 	let tspan = textElement
 		.text(null)
 		.append("tspan")
@@ -74,22 +42,17 @@ function wrapTextWithTooltip(
 	for (let i = 0; i < words.length; i++) {
 		line.push(words[i]);
 		tspan.text(line.join(" "));
-
-		// Check if current line width exceeds maxWidth
 		if (tspan.node().getComputedTextLength() > maxWidth) {
-			line.pop(); // Remove last word that caused overflow
-			tspan.text(line.join(" ")); // Set line without overflow
-			line = [words[i]]; // Start a new line with the last word
+			line.pop();
+			tspan.text(line.join(" "));
+			line = [words[i]];
 			lineNumber++;
 
-			// Check if adding this line exceeds maxLines limit
 			if (lineNumber >= maxLines) {
-				tspan.text(line.join(" ") + "…"); // Add ellipsis to last line
+				tspan.text(line.join(" ") + "…");
 				isTruncated = true;
 				break;
 			}
-
-			// Add new tspan for the next line
 			tspan = textElement
 				.append("tspan")
 				.attr("x", textElement.attr("x"))
@@ -99,58 +62,8 @@ function wrapTextWithTooltip(
 		}
 	}
 
-	// Tooltip setup if text was truncated
 	if (isTruncated) {
-		const tooltip = svg
-			.append("foreignObject")
-			.attr("class", "tooltip")
-			.attr("width", 200)
-			.attr("height", 50)
-			.style("visibility", "hidden");
-
-		const tooltipContent = tooltip
-			.append("xhtml:div")
-			.style("background", "rgba(0, 0, 0, 0.7)")
-			.style("color", "#fff")
-			.style("padding", "4px 8px")
-			.style("border-radius", "4px")
-			.style("font-size", "12px")
-			.style("pointer-events", "none")
-			.text(textContent);
-
-		// Show tooltip on mouseover
-		textElement
-			.on("mouseover", function () {
-				const { x, y } = textElement.node().getBBox();
-				tooltip
-					.attr("x", x + 10) // Offset slightly from text
-					.attr("y", y - 10)
-					.style("visibility", "visible");
-			})
-			.on("mouseout", function () {
-				tooltip.style("visibility", "hidden");
-			});
-	}
-}
-
-function applyEllipsisWithTooltip(textElement, textContent, maxWidth, svg) {
-	const tspan = textElement
-		.text(textContent)
-		.attr("x", textElement.attr("x"))
-		.attr("y", textElement.attr("y"))
-		.attr("dy", textElement.attr("dy"));
-
-	if (tspan.node().getComputedTextLength() > maxWidth) {
-		let truncatedText = textContent;
-		while (
-			truncatedText.length > 0 &&
-			tspan.node().getComputedTextLength() > maxWidth
-		) {
-			truncatedText = truncatedText.slice(0, -1);
-			tspan.text(truncatedText + "…");
-		}
-
-		// Append tooltip within the SVG as a `foreignObject`
+		console.log(isTruncated, ">>>>>isTruncated");
 		const tooltip = svg
 			.append("foreignObject")
 			.attr("class", "tooltip")
@@ -188,7 +101,16 @@ function transformData(data) {
 
 	function traverse(node, parent = null, pIndex = null) {
 		if (node) {
-			const { id, name, count, tooltip, delta, color, distribution } = node;
+			const {
+				id,
+				name,
+				count,
+				tooltip,
+				delta,
+				color,
+				distribution,
+				paddingBottom,
+			} = node;
 			const nodePush = nodes.push({
 				id,
 				name,
@@ -198,6 +120,7 @@ function transformData(data) {
 					: `<div class="sankey-node-tooltip opacity80">${tooltip}</div>`,
 				color,
 				delta: delta,
+				paddingBottom,
 			});
 			const index = nodePush - 1;
 			if (parent) {
@@ -211,7 +134,7 @@ function transformData(data) {
 	return { nodes, links };
 }
 
-const SankeyChart = ({ data, width = 800, heightMultiplier = 100 }) => {
+const SankeyChart = ({ data, width = 800, heightMultiplier = 120 }) => {
 	const svgRef = useRef();
 	const modifiedData = transformData(data);
 	const height = Math.max(
@@ -223,12 +146,19 @@ const SankeyChart = ({ data, width = 800, heightMultiplier = 100 }) => {
 		d3.select(svgRef.current).selectAll("*").remove();
 		const sankey = sankeyGenerator()
 			.nodeWidth(32)
-			.nodePadding(42)
+			.nodePadding(68)
 			.extent([
 				[0, 0],
 				[width, height],
 			]);
 		const { nodes, links } = sankey(modifiedData);
+
+		nodes.forEach((node) => {
+			if (node.value < 5) {
+				node.y1 = node.y0 + 5;
+			}
+		});
+
 		const svg = d3
 			.select(svgRef.current)
 			.attr("width", width)
@@ -262,18 +192,8 @@ const SankeyChart = ({ data, width = 800, heightMultiplier = 100 }) => {
 					.attr("width", d.x1 - d.x0)
 					.attr("height", nodeHeight)
 					.attr("fill", d.color)
-					.attr("rx", 8)
-					.attr("ry", 8);
-
-				// const titleText = d3
-				// 	.select(this)
-				// 	.append("text")
-				// 	.attr("x", (d) => d.x0 - 14)
-				// 	.attr("y", (d) => d.y0 + 6 + (nodeHeight < 100 ? 0.11 * nodeHeight : 11))
-				// 	.attr("dy", "0.35em")
-				// 	.attr("text-anchor", "end")
-				// 	.attr("fill", "#2A2D3C")
-				// 	.attr("class", "sankey-node-title");
+					.attr("rx", nodeHeight < 20 ? 4 : 8)
+					.attr("ry", nodeHeight < 20 ? 4 : 8);
 
 				const titleText = d3
 					.select(this)
@@ -285,22 +205,7 @@ const SankeyChart = ({ data, width = 800, heightMultiplier = 100 }) => {
 					.attr("fill", "#2A2D3C")
 					.attr("class", "sankey-node-title");
 
-				if (d.name) {
-					applyEllipsisWithTooltip(titleText, d.name, 120, svg);
-					// wrapTextWithTooltip(titleText, d.name, 120, nodeHeight, svg);
-					// if (nodeHeight < 40) applyEllipsisWithTooltip(titleText, d.name, 120, svg);
-					// else wrapText(titleText, d.name, 120);
-				}
-
-				// d3.select(this)
-				// 	.append("text")
-				// 	.attr("x", d.x0 + 15)
-				// 	.attr("y", d.y0 - 18)
-				// 	.attr("dy", "0.35em")
-				// 	.attr("text-anchor", "middle")
-				// 	.text(d.toolTip)
-				// 	.attr("fill", "#2A2D3C")
-				// 	.attr("class", "sankey-node-tooltip");
+				if (d.name) wrapTextWithTooltip(titleText, d.name, 180, nodeHeight, svg);
 
 				d3
 					.select(this)
